@@ -1,0 +1,8 @@
+server.port: 3000
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:8000/apidb
+    username: dbuser
+    password: test
+    driver-class-name: org.postgresql.Driver

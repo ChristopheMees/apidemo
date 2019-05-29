@@ -1,0 +1,18 @@
+version: '3'
+services:
+  api-db:
+    image: postgres:9.6.10-alpine
+    ports:
+      - "8000:5432"
+    environment:
+      POSTGRES_USER: dbuser
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: apidb
+      PGDATA: /tmp
+    volumes:
+      - ./.docker_data/api-db/data:/var/lib/postgresql/data
+
+  static-file-host:
+    build: ./front
+    ports:
+      - "8080:8080"

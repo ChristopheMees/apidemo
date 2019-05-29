@@ -1,0 +1,4 @@
+FROM halverneus/static-file-server:latest
+
+COPY index.html /web/index.html
+COPY thread.html /web/thread.html
