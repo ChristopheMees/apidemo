@@ -14,11 +14,39 @@
   
 	<nav aria-label="breadcrumb">
 	  <ol class="breadcrumb">
-			<li class="breadcrumb-item" aria-current="page">Home</li>
+			<li class="breadcrumb-item" aria-current="page"><a href="/">Home</a></li>
 	  </ol>
 	</nav>
 
-	<div id="main"></div>
+	<div id="main">
+		<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#newPostModal">
+			New Post
+		</button>
+
+		<div class="modal fade" id="newPostModal" tabindex="-1" role="dialog">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title">New Post</h5>
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+					</div>
+					<div class="modal-body">
+						<form>
+							<div class="form-group">
+								<label for="bodyInput">Message</label>
+								<textarea class="form-control" id="bodyInput" rows="3" placeholder="Enter a message..." required></textarea>
+							</div>
+							<div class="modal-footer">
+									<button type="button" id="close" class="btn btn-secondary" data-dismiss="modal">Close</button>
+									<button type="button" id="save" class="btn btn-primary">Save changes</button>
+								</div>
+						</form>
+					</div>
+			</div>
+		</div>
+	</div>
   
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
@@ -28,39 +56,68 @@
 		
 		<script>
 
-		$.urlParam = function (name) {
-				var results = new RegExp('[\?&]' + name + '=([^&#]*)')
-													.exec(window.location.search);
+			$.urlParam = function (name) {
+					var results = new RegExp('[\?&]' + name + '=([^&#]*)')
+														.exec(window.location.search);
 
-				return (results !== null) ? results[1] || 0 : false;
-		}
+					return (results !== null) ? results[1] || 0 : false;
+			}
 
-		function url(route) {
-			return 'http://localhost:' + '3000' + route;
-		}
+			function url(route) {
+				return 'http://localhost:3000' + route;
+			}
 
-		function setThreadInfo(thread)
-		{
-			$('ol').append('<li class="breadcrumb-item active" aria-current="page">' + thread.title + '</li>');
-			$('#main').append('<h1>' + thread.title + '</h1>');
-			$('#main').append('<p>' + thread.body + '</p>')
+			function setThreadInfo(thread)
+			{
+				$('ol').append('<li class="breadcrumb-item active" aria-current="page">' + thread.title + '</li>');
+				$('#main').append('<h2>' + thread.title + '</h2>');
+				$('#main').append('<p>' + thread.body + '</p>')
 
-			thread.posts.forEach(function( post ) {
-				var createdAt = post.createdAt.replace('T', ' ').replace(new RegExp(':[0-9]{2}\.[0-9]{3,}'), ' ');
-				$('#main').append('<h2>Posted on: ' + createdAt + '</h2>');
-				$('#main').append('<p>' + post.body + '</p>')
+				thread.posts.forEach(function( post ) {
+					var createdAt = post.createdAt.replace('T', ' ').replace(new RegExp(':[0-9]{2}\.[0-9]{3,}'), ' ');
+					$('#main').append('<h4>Posted on: ' + createdAt + '</h4>');
+					$('#main').append('<p>' + post.body + '</p>')
+				});
+			}
+
+			$( document ).ready(function() {
+				$.ajax({
+					type: 'GET',
+					url: url('/api/thread?id=' + $.urlParam('id')),
+					crossDomain: true,
+					success: setThreadInfo
+				});
+
+				// When the save button is clicked...
+				$("#save").click(function() {
+						// ...save the post
+
+						var body = $("#bodyInput").val();
+
+						// If the title and body were filled in
+						if(body && body !== '')
+						{
+							$.ajax({
+								type: 'PUT',
+								url: url('/api/post'),
+								headers: {'Content-Type': 'application/json'},
+								processData: false,
+								data: JSON.stringify({threadId: parseInt($.urlParam('id')), body}),
+								crossDomain: true
+							});
+
+							// Refresh the page
+							window.document.location = window.location;
+						}
+				});
+
+				// When the close button is clicked...
+				$("#close").click(function() {
+					// .clear the input fields
+					$("#bodyInput").val('');
+				});
 			});
-		}
 
-		$( document ).ready(function() {
-			$.ajax({
-				type: 'GET',
-				url: url('/api/thread?id=' + $.urlParam('id')),
-				crossDomain: true,
-				success: setThreadInfo
-			});
-		});
-		
 		</script>
 
   </body>
