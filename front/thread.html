@@ -44,6 +44,12 @@
 			$('ol').append('<li class="breadcrumb-item active" aria-current="page">' + thread.title + '</li>');
 			$('#main').append('<h1>' + thread.title + '</h1>');
 			$('#main').append('<p>' + thread.body + '</p>')
+
+			thread.posts.forEach(function( post ) {
+				var createdAt = post.createdAt.replace('T', ' ').replace(new RegExp(':[0-9]{2}\.[0-9]{3,}'), ' ');
+				$('#main').append('<h2>Posted on: ' + createdAt + '</h2>');
+				$('#main').append('<p>' + post.body + '</p>')
+			});
 		}
 
 		$( document ).ready(function() {

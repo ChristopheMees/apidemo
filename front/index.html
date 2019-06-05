@@ -23,8 +23,12 @@
 		<li class="breadcrumb-item active" aria-current="page">Home</li>
 	  </ol>
 	</nav>
-  
-    <table class="table table-dark table-hover">
+
+	<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#newThreadModal">
+		New Thread
+	</button>
+
+	<table class="table table-dark table-hover">
 	  <thead>
 		<tr>
 		  <th scope="col">Title</th>
@@ -34,6 +38,36 @@
 	  <tbody>
 	  </tbody>
 	</table>
+
+	<div class="modal fade" id="newThreadModal" tabindex="-1" role="dialog">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title">New Thread</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+						<form>
+							<div class="form-group">
+								<label for="titleInput">Title</label>
+								<input type="text" class="form-control" id="titleInput" placeholder="Enter a title..." required>
+							</div>
+							<div class="form-group">
+								<label for="bodyInput">Message</label>
+								<textarea class="form-control" id="bodyInput" rows="3" placeholder="Enter a message..." required></textarea>
+							</div>
+							<div class="modal-footer">
+									<button type="button" id="close" class="btn btn-secondary" data-dismiss="modal">Close</button>
+									<button type="submit" id="save" class="btn btn-primary">Save changes</button>
+								</div>
+						</form>
+				</div>
+			</div>
+		</div>
+	</div>
+
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
@@ -42,33 +76,65 @@
 		
 		<script>
 
-		function url(route) {
-			return 'http://localhost:' + '3000' + route;
-		}
+			function url(route) {
+				return 'http://localhost:3000' + route;
+			}
 
-		function updateList(threads)
-		{
-			var lines = [];
-			threads.forEach(function( thread ) {
-				var createdAt = thread.createdAt.replace('T', ' ').replace(new RegExp(':[0-9]{2}\.[0-9]{6}'), ' ');
-				lines.push( '<tr class="table-row" data-href="http://localhost:8080/thread.html?id=' + thread.id + '"><td>' + thread.title + '</td><td>' + createdAt + '</td></tr>');
+			function updateList(threads)
+			{
+				var lines = [];
+				threads.forEach(function( thread ) {
+					var createdAt = thread.createdAt.replace('T', ' ').replace(new RegExp(':[0-9]{2}\.[0-9]{3,}'), ' ');
+					lines.push( '<tr class="table-row" data-href="http://localhost:8080/thread.html?id=' + thread.id + '"><td>' + thread.title + '</td><td>' + createdAt + '</td></tr>');
+				});
+
+				$(lines.join( "" )).appendTo("tbody");
+
+				// When a row is clicked...
+				$(".table-row").click(function() {
+						// ...go to the thread page
+						window.document.location = $(this).data("href");
+				});
+
+				// When the save button is clicked...
+				$("#save").click(function() {
+						// ...save the thread
+
+						var title = $("#titleInput").val();
+						var body = $("#bodyInput").val();
+
+						// If the title and body were filled in
+						if(title && title !== '' && body && body !== '')
+						{
+							$.ajax({
+								type: 'PUT',
+								url: url('/api/thread'),
+								headers: {'Content-Type': 'application/json'},
+								processData: false,
+								data: JSON.stringify({title, body}),
+								crossDomain: true
+							});
+						}
+				});
+
+				// When the close button is clicked...
+				$("#close").click(function() {
+					// .clear the input fields
+					$("#titleInput").val('');
+					$("#bodyInput").val('');
+				});
+			}
+
+			// When the page has loaded...
+			$( document ).ready(function() {
+				// ....fetch the threads from the API
+				$.ajax({
+					type: 'GET',
+					url: url('/api/thread/all'),
+					crossDomain: true,
+					success: updateList
+				});
 			});
-
-			$(lines.join( "" )).appendTo("tbody");
-
-			$(".table-row").click(function() {
-					window.document.location = $(this).data("href");
-			});
-		}
-
-		$( document ).ready(function() {
-			$.ajax({
-				type: 'GET',
-				url: url('/api/thread/all'),
-				crossDomain: true,
-				success: updateList
-			});
-		});
 
 		</script>
 

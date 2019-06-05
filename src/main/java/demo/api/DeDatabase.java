@@ -1,22 +1,24 @@
 package demo.api;
 
 import demo.api.domain.ForumThread;
+import demo.api.domain.Post;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static java.util.Collections.emptyList;
 
 @Repository
 public class DeDatabase {
@@ -68,7 +70,7 @@ public class DeDatabase {
         List<ForumThread> threads = new ArrayList<>();
 
         // Query DB into a list of records
-        List<Map<String, Object>> records = template.queryForList("SELECT * FROM threads");
+        List<Map<String, Object>> records = template.queryForList("SELECT * FROM threads ORDER BY createdAt DESC");
 
         // For each record in records
         for(Map<String, Object> record : records)
@@ -82,16 +84,42 @@ public class DeDatabase {
     public ForumThread readThread(Integer id)
     {
         Map<String, Object> record = template.queryForMap("SELECT * FROM threads WHERE id=?", id);
-        return recordToThread(record);
+        List<Map<String, Object>> posts = template.queryForList("SELECT * FROM posts WHERE threadId=?", id);
+        return recordToThread(record, posts);
     }
 
     private static ForumThread recordToThread(Map<String, Object> record)
+    {
+        return recordToThread(record, emptyList());
+    }
+
+    private static ForumThread recordToThread(Map<String, Object> record, List<Map<String, Object>> posts)
     {
         ForumThread thread = new ForumThread();
         thread.setId((Integer) record.get("id"));
         thread.setTitle((String) record.get("title"));
         thread.setBody((String) record.get("body"));
         thread.setCreatedAt(((Timestamp) record.get("createdAt")).toLocalDateTime());
+        thread.setPosts(new ArrayList<>());
+
+        for(Map<String, Object> post : posts)
+        {
+            thread.getPosts().add(recordToPost(post));
+        }
+
         return thread;
+    }
+
+    private static Post recordToPost(Map<String, Object> record)
+    {
+        Post post = new Post();
+        post.setBody((String) record.get("body"));
+        post.setCreatedAt(((Timestamp) record.get("createdAt")).toLocalDateTime());
+        return post;
+    }
+
+    public void createPost(Post post)
+    {
+        template.update("INSERT INTO posts(threadId, body) VALUES(?, ?)", post.getThreadId(), post.getBody());
     }
 }
